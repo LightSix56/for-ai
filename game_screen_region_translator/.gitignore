@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# venv / env
+venv/
+.venv/
+env/
+.env
+
+# Логи/кеши
+logs/
+*.log
+
+# VS Code (по желанию)
+.vscode/
