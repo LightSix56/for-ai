@@ -898,45 +898,32 @@ def generate_docx(character: Character, output_path: str):
     # ── Spell Slots ──
     add_section_header(doc, "ЯЧЕЙКИ ЗАКЛИНАНИЙ")
 
-    # Count how many levels have slots
-    slot_levels = []
-    for lvl in range(1, 10):
-        slot_info = character.spell_slots.get(lvl)
-        if slot_info and slot_info.total_slots > 0:
-            slot_levels.append(lvl)
+    # Show all 9 levels of spell slots
+    t = doc.add_table(rows=3, cols=9)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    set_table_borders(t)
 
-    if slot_levels:
-        t = doc.add_table(rows=3, cols=len(slot_levels))
-        t.alignment = WD_TABLE_ALIGNMENT.CENTER
-        set_table_borders(t)
+    # Headers
+    for i in range(9):
+        lvl = i + 1
+        add_cell_text(t.cell(0, i), f"{lvl} ур.", bold=True, size=9,
+                      color="FFFFFF", alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_shading(t.cell(0, i), COLOR_HEADER_BG)
 
-        # Headers
-        for i, lvl in enumerate(slot_levels):
-            add_cell_text(t.cell(0, i), f"{lvl} ур.", bold=True, size=9,
-                          color="FFFFFF", alignment=WD_ALIGN_PARAGRAPH.CENTER)
-            set_cell_shading(t.cell(0, i), COLOR_HEADER_BG)
+    # Total slots
+    for i in range(9):
+        lvl = i + 1
+        slot_info = character.spell_slots.get(lvl, SpellSlotInfo(lvl))
+        add_cell_text(t.cell(1, i), str(slot_info.total_slots), size=10,
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_shading(t.cell(1, i), COLOR_LIGHT_BG)
 
-        # Total slots
-        for i, lvl in enumerate(slot_levels):
-            slot_info = character.spell_slots.get(lvl, SpellSlotInfo(lvl))
-            add_cell_text(t.cell(1, i), str(slot_info.total_slots), size=10,
-                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
-            set_cell_shading(t.cell(1, i), COLOR_LIGHT_BG)
-
-        # Expended
-        for i, lvl in enumerate(slot_levels):
-            slot_info = character.spell_slots.get(lvl, SpellSlotInfo(lvl))
-            add_cell_text(t.cell(2, i), str(slot_info.expended_slots), size=10,
-                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
-    else:
-        t = doc.add_table(rows=2, cols=9)
-        t.alignment = WD_TABLE_ALIGNMENT.CENTER
-        set_table_borders(t)
-        for i in range(9):
-            add_cell_text(t.cell(0, i), f"{i+1} ур.", bold=True, size=8,
-                          color="FFFFFF", alignment=WD_ALIGN_PARAGRAPH.CENTER)
-            set_cell_shading(t.cell(0, i), COLOR_HEADER_BG)
-            add_cell_text(t.cell(1, i), "0", size=9, alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    # Expended
+    for i in range(9):
+        lvl = i + 1
+        slot_info = character.spell_slots.get(lvl, SpellSlotInfo(lvl))
+        add_cell_text(t.cell(2, i), str(slot_info.expended_slots), size=10,
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
     # ── Cantrips ──
     add_section_header(doc, "ЗАГОВОРЫ (0 уровень)")
@@ -957,22 +944,28 @@ def generate_docx(character: Character, output_path: str):
                       color=COLOR_BORDER)
 
     # ── Spells by Level ──
+    # Show all 9 spell levels, even if empty
     for lvl in range(1, 10):
         spells = character.spells_by_level.get(lvl, [])
-        if not spells:
-            continue
-
+        
         add_section_header(doc, f"ЗАКЛИНАНИЯ {lvl} УРОВНЯ")
-
-        t = doc.add_table(rows=len(spells), cols=3)
-        t.alignment = WD_TABLE_ALIGNMENT.CENTER
-        set_table_borders(t)
-        make_header_row(t, 0, ["Подг.", "Название", "Прим."])
-        for i, spell in enumerate(spells):
-            prep = "●" if spell.prepared else "○"
-            add_cell_text(t.cell(i, 0), prep, size=9, alignment=WD_ALIGN_PARAGRAPH.CENTER)
-            add_cell_text(t.cell(i, 1), spell.name, size=9)
-            add_cell_text(t.cell(i, 2), "", size=9)
+        
+        if spells:
+            t = doc.add_table(rows=len(spells), cols=3)
+            t.alignment = WD_TABLE_ALIGNMENT.CENTER
+            set_table_borders(t)
+            make_header_row(t, 0, ["Подг.", "Название", "Прим."])
+            for i, spell in enumerate(spells):
+                prep = "●" if spell.prepared else "○"
+                add_cell_text(t.cell(i, 0), prep, size=9, alignment=WD_ALIGN_PARAGRAPH.CENTER)
+                add_cell_text(t.cell(i, 1), spell.name, size=9)
+                add_cell_text(t.cell(i, 2), "", size=9)
+        else:
+            t = doc.add_table(rows=1, cols=1)
+            t.alignment = WD_TABLE_ALIGNMENT.CENTER
+            set_table_borders(t)
+            add_cell_text(t.cell(0, 0), "(нет заклинаний)", size=9, italic=True,
+                          color=COLOR_BORDER)
 
     # ── Legend ──
     doc.add_paragraph()
